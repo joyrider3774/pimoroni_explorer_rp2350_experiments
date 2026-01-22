@@ -66,7 +66,10 @@ void Arduino_ST7789_Parallel::tftInit() {
   _bus->sendCommand(0xBB);  // VCOMS
   _bus->sendData(0x1F);
   /*
-  _bus->sendCommand(0xE0);  // PVGAMCTRL
+  // Gamma correction - affects color appearance
+  // These values are from Pimoroni's driver for good color balance
+  // To disable gamma (linear), comment out these two commands
+  _bus->sendCommand(0xE0);  // PVGAMCTRL - Positive voltage gamma
   _bus->sendData(0xD0);
   _bus->sendData(0x04);
   _bus->sendData(0x0D);
@@ -82,7 +85,7 @@ void Arduino_ST7789_Parallel::tftInit() {
   _bus->sendData(0x1F);
   _bus->sendData(0x23);
   
-  _bus->sendCommand(0xE1);  // NVGAMCTRL
+  _bus->sendCommand(0xE1);  // NVGAMCTRL - Negative voltage gamma
   _bus->sendData(0xD0);
   _bus->sendData(0x04);
   _bus->sendData(0x0C);

@@ -119,7 +119,9 @@ void Arduino_PimoroniPAR8::wait_for_finish() {
 }
 
 void Arduino_PimoroniPAR8::beginWrite() {
-  pio_sm_clear_fifos(_pio, _sm);
+  // Don't clear FIFO - causes slowdown and shouldn't be necessary
+  // The FIFO is managed by DMA and wait_for_finish()
+  // pio_sm_clear_fifos(_pio, _sm);
   gpio_put(_cs, 0);
 }
 
@@ -164,51 +166,45 @@ void Arduino_PimoroniPAR8::writeRepeat(uint16_t data, uint32_t len) {
   
   gpio_put(_dc, 1);  // Data mode
   
-  // Use a small buffer and repeat it
-  const size_t buf_size = 512;
-  uint8_t buf[buf_size];
+  // Use static buffer for DMA
+  const size_t buf_size = 8192;  // 8KB buffer (4096 pixels)
+  static uint8_t buf[buf_size];  // Static to avoid stack allocation
   
-  for(size_t i = 0; i < buf_size / 2; i++) {
-    buf[i * 2] = hi;
-    buf[i * 2 + 1] = lo;
+  // Fill only what we need (not the entire buffer every time!)
+  size_t fill_len = (len * 2 < buf_size) ? len * 2 : buf_size;
+  for(size_t i = 0; i < fill_len; i += 2) {
+    buf[i] = hi;
+    buf[i + 1] = lo;
   }
   
-  while(len >= buf_size / 2) {
+  // Send in chunks
+  while(len * 2 >= buf_size) {
     write_blocking_dma(buf, buf_size);
-    wait_for_finish();
+    wait_for_finish();  // MUST wait before reusing buffer
     len -= buf_size / 2;
   }
   
   if(len > 0) {
     write_blocking_dma(buf, len * 2);
-    wait_for_finish();
+    wait_for_finish();  // Need to wait to prevent corruption on next call
   }
 }
 
 void Arduino_PimoroniPAR8::writeBytes(uint8_t *data, uint32_t len) {
   gpio_put(_dc, 1);  // Data mode
   
-  // Send in chunks if needed
-  const size_t chunk_size = 4096;
-  while(len > chunk_size) {
-    write_blocking_dma(data, chunk_size);
-    wait_for_finish();
-    data += chunk_size;
-    len -= chunk_size;
-  }
-  
-  if(len > 0) {
-    write_blocking_dma(data, len);
-    wait_for_finish();
-  }
+  // Just send it all at once - DMA can handle large transfers
+  write_blocking_dma(data, len);
+  // Don't wait here - endWrite() will wait
 }
 
 void Arduino_PimoroniPAR8::writePixels(uint16_t *data, uint32_t len) {
   gpio_put(_dc, 1);  // Data mode
   
   // Send directly - no byte swap (framebuffer is already in correct format)
+  // Don't wait - let DMA queue multiple transfers for speed
   write_blocking_dma((uint8_t*)data, len * 2);
-  wait_for_finish();
+  // Wait removed - will wait in endWrite() instead
 }
 
 void Arduino_PimoroniPAR8::writePattern(uint8_t *data, uint8_t len, uint32_t repeat) {
