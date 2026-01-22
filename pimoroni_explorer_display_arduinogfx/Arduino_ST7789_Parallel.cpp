@@ -65,7 +65,7 @@ void Arduino_ST7789_Parallel::tftInit() {
   
   _bus->sendCommand(0xBB);  // VCOMS
   _bus->sendData(0x1F);
-  
+  /*
   _bus->sendCommand(0xE0);  // PVGAMCTRL
   _bus->sendData(0xD0);
   _bus->sendData(0x04);
@@ -97,7 +97,7 @@ void Arduino_ST7789_Parallel::tftInit() {
   _bus->sendData(0x1F);
   _bus->sendData(0x20);
   _bus->sendData(0x23);
-  
+  */
   _bus->sendCommand(0x21);  // INVON
   _bus->sendCommand(0x11);  // SLPOUT
   delay(120);
