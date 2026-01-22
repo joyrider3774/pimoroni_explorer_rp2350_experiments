@@ -1,4 +1,4 @@
-# omoroni_explorer_rp2350_experiments
+# Pimoroni_explorer_rp2350_experiments
 experiments / test code i used for [Pimoroni Explorer (rp2350)](https://shop.pimoroni.com/products/explorer?variant=42092697845843)
 
 ## pimoroni_explorer_display_arduinogfx
