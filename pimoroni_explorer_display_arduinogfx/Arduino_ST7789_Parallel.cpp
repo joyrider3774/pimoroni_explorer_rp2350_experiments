@@ -65,6 +65,13 @@ void Arduino_ST7789_Parallel::tftInit() {
   
   _bus->sendCommand(0xBB);  // VCOMS
   _bus->sendData(0x1F);
+  
+  // Set default MADCTL for 320x240 landscape orientation
+  // 0x60 = MX | MV (Column order reversed + Row/Column swap)
+  // This is the correct orientation for Pimoroni Explorer
+  _bus->sendCommand(0x36);  // MADCTL
+  _bus->sendData(0x60);
+  
   /*
   // Gamma correction - affects color appearance
   // These values are from Pimoroni's driver for good color balance
