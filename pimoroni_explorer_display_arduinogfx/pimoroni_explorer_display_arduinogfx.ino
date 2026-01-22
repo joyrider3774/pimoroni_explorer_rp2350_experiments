@@ -3,7 +3,7 @@
 #include "Arduino_ST7789_Parallel.h"
 
 // Define this to use Arduino_Canvas (framebuffer), comment out for direct drawing
-#define USE_CANVxxxAS
+#define USE_CANVAS
 
 // COLOR macro - swaps bytes for canvas mode, normal for direct mode
 #ifdef USE_CANVAS
