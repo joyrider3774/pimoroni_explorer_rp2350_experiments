@@ -4,17 +4,18 @@
 
 // Color swap macro for existing RGB565 values
 // Use with Arduino_GFX's color565() function: COLOR_SWAP(gfx->color565(r, g, b))
-#define COLOR_SWAP(c) (((c) >> 8) | ((c) << 8))
+#define COLOR_SWAP(c) ((uint16_t)(((c) >> 8) | ((c) << 8)))
 
-// Pre-swapped color definitions
+// Pre-swapped RGB565 color definitions
+// Format: RRRRRGGGGGGBBBBB (5-6-5 bits)
 #define BLACK_SWAP   0x0000
-#define WHITE_SWAP   COLOR_SWAP(WHITE)
-#define RED_SWAP     COLOR_SWAP(RED)
-#define GREEN_SWAP   COLOR_SWAP(GREEN)
-#define BLUE_SWAP    COLOR_SWAP(BLUE)
-#define YELLOW_SWAP  COLOR_SWAP(YELLOW)
-#define CYAN_SWAP    COLOR_SWAP(CYAN)
-#define MAGENTA_SWAP COLOR_SWAP(MAGENTA)
+#define WHITE_SWAP   COLOR_SWAP(0xFFFF)
+#define RED_SWAP     COLOR_SWAP(0xF800)
+#define GREEN_SWAP   COLOR_SWAP(0x07E0)
+#define BLUE_SWAP    COLOR_SWAP(0x001F)
+#define YELLOW_SWAP  COLOR_SWAP(0xFFE0)
+#define CYAN_SWAP    COLOR_SWAP(0x07FF)
+#define MAGENTA_SWAP COLOR_SWAP(0xF81F)
 
 // Use Arduino_GFX built-in canvas for flicker-free drawing
 Arduino_PimoroniPAR8 *bus;
