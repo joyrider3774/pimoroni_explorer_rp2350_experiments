@@ -9,3 +9,10 @@ It seemed to work fine with my testings
 The following libraries are required for this example to compile:
 - **[arduino_pico](https://github.com/earlephilhower/arduino-pico)**: to be able to use the pimoroni explorer board in arduino ide
 - **Arduino_GFX_Library**: for doing actual gfx drawing
+
+## pimoroni_explorer_mixedtones
+mixedtones is a library / set of functions to play multiple tones, potentially played at the same time using a speaker pin and pwm. 
+I mainly needed this for the port of the crisp game lib portable. The example plays some sound effects and little musical pieces. The (example) code
+was largely created with the help of claude.ai and seems to work fine.
+The following libraries are required for this example to compile:
+- **[arduino_pico](https://github.com/earlephilhower/arduino-pico)**: to be able to use the pimoroni explorer board in arduino ide
