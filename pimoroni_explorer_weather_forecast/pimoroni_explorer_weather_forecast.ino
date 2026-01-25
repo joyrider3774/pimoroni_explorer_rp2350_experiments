@@ -34,7 +34,8 @@
 #define BME280_ADDR  0x76
 
 // Pressure history settings
-#define PRESSURE_SAMPLES 12  // Track 12 readings (1 per 5 minutes = 1 hour)
+#define PRESSURE_SAMPLES 36  // Number of samples (default: 36 = 3 hours at 5min intervals)
+                             // Options: 12 (1hr), 24 (2hr), 36 (3hr), 48 (4hr), 72 (6hr)
 #define SAMPLE_INTERVAL 300000  // 5 minutes in milliseconds
 
 // BME280 sensor
