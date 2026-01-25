@@ -218,7 +218,7 @@ void updateTime() {
   unsigned long currentMillis = millis();
   
   if (!settingTime && currentMillis - lastTimeUpdate >= 1000) {
-    lastTimeUpdate = currentMillis;
+    lastTimeUpdate += 1000;  // Fixed: use += to prevent drift
     seconds++;
     
     if (seconds >= 60) {
