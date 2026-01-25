@@ -31,9 +31,9 @@ The following libraries are required for this example to compile:
 - **Adafruit_BusIO**: dependency for I2C/SPI
 
 ## pimoroni_explorer_weather_forecast
-a weather station and clock for your Pimoroni Explorer RP2350 with the Multi-Sensor Stick. It displays temperature, humidity, barometric pressure, and dew point from the BME280 sensor.
-The main feature is intelligent weather forecasting based on pressure trends. It samples pressure every 5 minutes and stores 12 readings to track hourly changes. By analyzing whether pressure is rising or falling, it predicts conditions like "Rain Coming," "Fair Weather," or "Storm Warning" with color-coded weather icons.
-The display shows date and time in DD/MM/YYYY format that you can set using the ABXY buttons. Press A to enter setting mode, B to cycle through fields (hours, minutes, day, month, year), then X to increment or Y to decrement. The clock automatically handles midnight rollovers and leap years.
+A weather station and clock for the Pimoroni Explorer RP2350 with the Multi-Sensor Stick. It displays temperature, humidity, barometric pressure (corrected to sea level), and dew point from the BME280 sensor.
+The main feature is intelligent weather forecasting based on pressure trends. It samples pressure every 5 minutes and stores 12 readings to track hourly changes. By analyzing whether pressure is rising or falling, it predicts conditions like "Rain Coming," "Fair Weather," or "Storm Warning" with color-coded weather icons. The system automatically compensates for altitude to provide accurate forecasts anywhere.
+The display shows date and time in DD/MM/YYYY format that you can set using the ABXY buttons. Press A to enter setting mode, B to cycle through fields (hours, minutes, day, month, year, altitude), then X to increment or Y to decrement. Set your altitude once for accurate pressure readings. The clock automatically handles midnight rollovers and leap years.
 To prevent LCD burn-in, a screensaver activates after 5 minutes of inactivity, moving the clock and basic weather info to new random positions every 10 seconds. Any button press exits the screensaver. The backlight is set to 65 for optimal visibility while reducing power consumption.
 Created by claude.ai
 

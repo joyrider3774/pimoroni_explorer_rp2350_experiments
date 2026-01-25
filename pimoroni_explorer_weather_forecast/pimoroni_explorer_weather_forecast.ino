@@ -71,10 +71,13 @@ bool btnYPressed = false;
 
 // Time setting mode
 bool settingTime = false;
-enum SettingMode { SET_HOURS, SET_MINUTES, SET_DAY, SET_MONTH, SET_YEAR };
+enum SettingMode { SET_HOURS, SET_MINUTES, SET_DAY, SET_MONTH, SET_YEAR, SET_ALTITUDE };
 SettingMode settingMode = SET_HOURS;
 unsigned long lastBlink = 0;
 bool blinkState = true;
+
+// Altitude setting (meters above sea level)
+int altitudeMeters = 0;  // Set to your location's altitude
 
 // Pressure tracking for forecast
 float pressureHistory[PRESSURE_SAMPLES];
@@ -96,9 +99,10 @@ enum Forecast {
 struct WeatherData {
   float temperature;
   float humidity;
-  float pressure;
+  float pressure;           // Local pressure
+  float seaLevelPressure;   // Adjusted to sea level
   float dewPoint;
-  float pressureTrend;  // hPa per hour
+  float pressureTrend;      // hPa per hour
   Forecast forecast;
   const char* forecastText;
 } weather;
@@ -294,8 +298,8 @@ void handleButtons() {
   
   // B button - Cycle through setting modes
   if (settingTime && btnB && !btnBPressed) {
-    settingMode = (SettingMode)((settingMode + 1) % 5);
-    const char* modeNames[] = {"HOURS", "MINUTES", "DAY", "MONTH", "YEAR"};
+    settingMode = (SettingMode)((settingMode + 1) % 6);
+    const char* modeNames[] = {"HOURS", "MINUTES", "DAY", "MONTH", "YEAR", "ALTITUDE"};
     Serial.print("Now setting: ");
     Serial.println(modeNames[settingMode]);
     delay(200);
@@ -333,6 +337,10 @@ void handleButtons() {
           day = getDaysInMonth(month, year);
         }
         break;
+      case SET_ALTITUDE:
+        altitudeMeters += 10;
+        if (altitudeMeters > 5000) altitudeMeters = 0;
+        break;
     }
     Serial.print("Date/Time: ");
     Serial.print(year);
@@ -343,7 +351,10 @@ void handleButtons() {
     Serial.print(" ");
     Serial.print(hours);
     Serial.print(":");
-    Serial.println(minutes);
+    Serial.print(minutes);
+    Serial.print(" Altitude: ");
+    Serial.print(altitudeMeters);
+    Serial.println("m");
     delay(150);
   }
   btnXPressed = btnX;
@@ -379,6 +390,10 @@ void handleButtons() {
           day = getDaysInMonth(month, year);
         }
         break;
+      case SET_ALTITUDE:
+        altitudeMeters -= 10;
+        if (altitudeMeters < 0) altitudeMeters = 5000;
+        break;
     }
     Serial.print("Date/Time: ");
     Serial.print(year);
@@ -389,7 +404,10 @@ void handleButtons() {
     Serial.print(" ");
     Serial.print(hours);
     Serial.print(":");
-    Serial.println(minutes);
+    Serial.print(minutes);
+    Serial.print(" Altitude: ");
+    Serial.print(altitudeMeters);
+    Serial.println("m");
     delay(150);
   }
   btnYPressed = btnY;
@@ -402,7 +420,7 @@ void updatePressureHistory() {
   if (currentMillis - lastPressureSample >= SAMPLE_INTERVAL) {
     lastPressureSample = currentMillis;
     
-    pressureHistory[pressureIndex] = weather.pressure;
+    pressureHistory[pressureIndex] = weather.seaLevelPressure;  // Use sea level pressure
     pressureIndex = (pressureIndex + 1) % PRESSURE_SAMPLES;
     
     if (samplesCollected < PRESSURE_SAMPLES) {
@@ -412,8 +430,8 @@ void updatePressureHistory() {
     Serial.print("Pressure sample #");
     Serial.print(samplesCollected);
     Serial.print(": ");
-    Serial.print(weather.pressure);
-    Serial.println(" hPa");
+    Serial.print(weather.seaLevelPressure);
+    Serial.println(" hPa (sea level)");
   }
 }
 
@@ -427,16 +445,16 @@ void calculateForecast() {
   }
   
   // Calculate pressure trend (change per hour)
-  // Compare current pressure to oldest sample
+  // Compare current pressure to oldest sample (use sea level pressure)
   int oldestIndex = (pressureIndex + PRESSURE_SAMPLES - samplesCollected) % PRESSURE_SAMPLES;
   float oldestPressure = pressureHistory[oldestIndex];
-  float pressureChange = weather.pressure - oldestPressure;
+  float pressureChange = weather.seaLevelPressure - oldestPressure;
   
   // Convert to hPa per hour
   float hoursElapsed = (samplesCollected * SAMPLE_INTERVAL) / 3600000.0;
   weather.pressureTrend = pressureChange / hoursElapsed;
   
-  // Forecast based on pressure and trend
+  // Forecast based on sea level pressure and trend
   // These thresholds are based on common meteorological guidelines
   
   if (weather.pressureTrend > 2.0) {
@@ -445,7 +463,7 @@ void calculateForecast() {
     weather.forecastText = "Improving";
   } else if (weather.pressureTrend > 0.5) {
     // Slowly rising
-    if (weather.pressure > 1020) {
+    if (weather.seaLevelPressure > 1020) {
       weather.forecast = FORECAST_SUNNY;
       weather.forecastText = "Fair Weather";
     } else {
@@ -454,10 +472,10 @@ void calculateForecast() {
     }
   } else if (weather.pressureTrend > -0.5) {
     // Stable
-    if (weather.pressure > 1020) {
+    if (weather.seaLevelPressure > 1020) {
       weather.forecast = FORECAST_SUNNY;
       weather.forecastText = "Stable/Fair";
-    } else if (weather.pressure > 1000) {
+    } else if (weather.seaLevelPressure > 1000) {
       weather.forecast = FORECAST_FAIR;
       weather.forecastText = "Partly Cloudy";
     } else {
@@ -466,7 +484,7 @@ void calculateForecast() {
     }
   } else if (weather.pressureTrend > -2.0) {
     // Slowly falling
-    if (weather.pressure > 1010) {
+    if (weather.seaLevelPressure > 1010) {
       weather.forecast = FORECAST_CHANGING;
       weather.forecastText = "Clouding Up";
     } else {
@@ -475,7 +493,7 @@ void calculateForecast() {
     }
   } else {
     // Rapidly falling
-    if (weather.pressure < 1000) {
+    if (weather.seaLevelPressure < 1000) {
       weather.forecast = FORECAST_STORM;
       weather.forecastText = "Storm Warning";
     } else {
@@ -632,9 +650,26 @@ void drawClock() {
     gfx->print("SETTING MODE");
     
     gfx->setTextColor(COLOR(CYAN));
-    gfx->setCursor(60, 80);
-    const char* modeNames[] = {"[HOURS]", "[MINUTES]", "[DAY]", "[MONTH]", "[YEAR]"};
+    gfx->setCursor(50, 80);
+    const char* modeNames[] = {"[HOURS]", "[MINUTES]", "[DAY]", "[MONTH]", "[YEAR]", "[ALTITUDE]"};
     gfx->print(modeNames[settingMode]);
+    
+    // Show altitude value when setting it
+    if (settingMode == SET_ALTITUDE) {
+      gfx->setTextSize(2);
+      if (millis() - lastBlink > 500) {
+        blinkState = !blinkState;
+        lastBlink = millis();
+      }
+      if (blinkState) {
+        gfx->setTextColor(COLOR(YELLOW));
+      } else {
+        gfx->setTextColor(COLOR(GRAY));
+      }
+      gfx->setCursor(80, 90);
+      gfx->print(altitudeMeters);
+      gfx->print(" m");
+    }
   }
 }
 
@@ -660,11 +695,11 @@ void drawWeatherInfo() {
   
   startY += 35;
   
-  // Pressure with trend arrow
+  // Pressure with trend arrow (show sea level pressure)
   gfx->setTextSize(2);
   gfx->setTextColor(COLOR(BLUE));
   gfx->setCursor(10, startY);
-  gfx->print(weather.pressure, 1);
+  gfx->print(weather.seaLevelPressure, 1);
   gfx->print(" hPa");
   
   // Trend arrow
@@ -852,7 +887,15 @@ void drawButtonHints() {
 void readWeather() {
   weather.temperature = bme.readTemperature();
   weather.humidity = bme.readHumidity();
-  weather.pressure = bme.readPressure() / 100.0F;
+  weather.pressure = bme.readPressure() / 100.0F;  // Local pressure
+  
+  // Calculate sea level equivalent pressure
+  // Formula: P0 = P / (1 - (altitude / 44330))^5.255
+  if (altitudeMeters > 0) {
+    weather.seaLevelPressure = weather.pressure / pow(1.0 - (altitudeMeters / 44330.0), 5.255);
+  } else {
+    weather.seaLevelPressure = weather.pressure;
+  }
   
   // Calculate dew point using Magnus formula
   float a = 17.27;
